@@ -15,3 +15,4 @@ experiments/sudoku_cpu_20250723_142702/best_model.pt
 
 # Datasets
 datasets/sudoku.csv
+datasets/sudoku.csv
