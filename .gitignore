@@ -1,0 +1,17 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+venv
+.venv
+
+# Model
+experiments/sudoku_cpu_20250723_142702/best_model.pt
+
+# Datasets
+datasets/sudoku.csv

@@ -1,0 +1,15 @@
+[project]
+name = "hierarchical-reasoning-model"
+version = "0.1.0"
+description = "Add your description here"
+requires-python = ">=3.11"
+dependencies = [
+    "einops>=0.8.1",
+    "matplotlib>=3.10.3",
+    "numpy>=2.3.1",
+    "pandas>=2.3.1",
+    "scikit-learn>=1.7.1",
+    "seaborn>=0.13.2",
+    "torch>=2.7.1",
+    "tqdm>=4.67.1",
+]

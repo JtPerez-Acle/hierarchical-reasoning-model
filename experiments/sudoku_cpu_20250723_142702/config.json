@@ -1,0 +1,18 @@
+{
+  "data_path": "datasets/sudoku.csv",
+  "batch_size": 4,
+  "max_samples": 1000,
+  "representation": "one_hot",
+  "hidden_dim": 64,
+  "num_transformer_layers": 2,
+  "N": 3,
+  "T": 2,
+  "num_heads": 4,
+  "dropout": 0.1,
+  "num_epochs": 10,
+  "learning_rate": 0.001,
+  "weight_decay": 0.01,
+  "num_segments": 2,
+  "print_freq": 10,
+  "eval_freq": 2
+}

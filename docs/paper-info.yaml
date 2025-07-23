@@ -1,0 +1,201 @@
+project_name: "Hierarchical Reasoning Model (HRM)"
+paper_title: "Hierarchical Reasoning Model"
+paper_url: "arXiv:2506.21734v1"
+authors: 
+  - "Guan Wang"
+  - "Jin Li"
+  - "Yuhao Sun"
+  - "et al."
+organization: "Sapient Intelligence, Singapore"
+
+overview:
+  description: "Brain-inspired recurrent architecture for complex reasoning tasks"
+  key_innovation: "Hierarchical convergence with multi-timescale processing"
+  model_size: "27M parameters"
+  training_data: "1000 examples per task"
+  
+architecture:
+  components:
+    input_network:
+      name: "f_I"
+      type: "embedding_layer"
+      description: "Projects input to working representation"
+      
+    low_level_module:
+      name: "f_L"
+      type: "transformer_encoder"
+      description: "Fast, detailed computations"
+      hidden_dim: 512  # adjust as needed
+      
+    high_level_module:
+      name: "f_H"
+      type: "transformer_encoder"
+      description: "Slow, abstract planning"
+      hidden_dim: 512  # same as low_level
+      
+    output_network:
+      name: "f_O"
+      type: "linear_softmax"
+      description: "Generates predictions"
+      
+  hyperparameters:
+    N: 2  # Number of high-level cycles
+    T: 2  # Low-level steps per cycle
+    total_steps: "N * T"
+    
+  dynamics:
+    low_level_update: |
+      z_L^i = f_L(z_L^{i-1}, z_H^{i-1}, x_tilde; theta_L)
+    high_level_update: |
+      z_H^i = f_H(z_H^{i-1}, z_L^{i-1}; theta_H) if i ≡ 0 (mod T)
+      z_H^i = z_H^{i-1} otherwise
+      
+transformer_specifications:
+  architecture: "encoder_only"
+  enhancements:
+    - rotary_positional_encoding: true
+    - gated_linear_units: true
+    - rmsnorm: true
+    - bias_terms: false
+  initialization:
+    weights: "truncated_lecun_normal"
+    hidden_states: "truncated_normal(std=1, truncation=2)"
+    
+training:
+  optimizer:
+    type: "Adam-atan2"
+    learning_rate: "constant_with_linear_warmup"
+    
+  gradient_approximation:
+    method: "1-step"
+    memory_complexity: "O(1)"
+    gradient_path: "output_head -> final_H_state -> final_L_state -> input_embedding"
+    
+  deep_supervision:
+    enabled: true
+    segments_per_example: "variable"
+    detach_between_segments: true
+    
+  adaptive_computation_time:
+    enabled: true
+    method: "Q-learning"
+    max_segments: "Mmax"
+    min_segments: "Mmin (stochastic)"
+    halting_mechanism:
+      q_head_output: "[Q_halt, Q_continue]"
+      epsilon: 0.1  # exploration rate
+      
+  loss_functions:
+    main_loss: "cross_entropy"
+    act_loss: "binary_cross_entropy(Q_hat, G_hat)"
+    combined: "main_loss + act_loss"
+    
+datasets:
+  arc_agi:
+    training_size: 960
+    test_size: 1120
+    augmentations:
+      - "translations"
+      - "rotations"
+      - "flips"
+      - "color_permutations"
+    preprocessing: "flatten_2d_grids"
+    special_tokens: "learnable_puzzle_tokens"
+    
+  sudoku_extreme:
+    training_size: 1000
+    test_size: "10% of full dataset"
+    difficulty: "mean 22 backtracks per puzzle"
+    augmentations:
+      - "band_permutations"
+      - "digit_permutations"
+    input_format: "9x9 grid flattened"
+    
+  maze_hard:
+    training_size: 1000
+    test_size: 1000
+    grid_size: "30x30"
+    difficulty_threshold: 110
+    augmentations: "none"
+    
+implementation_code:
+  core_forward_pass: |
+    def hrm(z, x, N=2, T=2):
+        x = input_embedding(x)
+        zH, zL = z
+        with torch.no_grad():
+            for _i in range(N * T - 1):
+                zL = L_net(zL, zH, x)
+                if (_i + 1) % T == 0:
+                    zH = H_net(zH, zL)
+        # 1-step grad
+        zL = L_net(zL, zH, x)
+        zH = H_net(zH, zL)
+        return (zH, zL), output_head(zH)
+        
+  training_loop: |
+    for x, y_true in train_dataloader:
+        z = z_init
+        for step in range(N_supervision):
+            z, y_hat = hrm(z, x)
+            loss = softmax_cross_entropy(y_hat, y)
+            z = z.detach()
+            loss.backward()
+            opt.step()
+            opt.zero_grad()
+            
+results:
+  arc_agi_1:
+    accuracy: 40.3
+    baseline_claude_3_7: 21.2
+    baseline_o3_mini: 34.5
+    
+  sudoku_extreme:
+    accuracy: 55.0
+    baseline_all: 0.0
+    
+  maze_hard_30x30:
+    accuracy: 74.5
+    baseline_all: 0.0
+    
+key_features:
+  hierarchical_convergence:
+    description: "L-module converges locally, H-module resets it"
+    prevents: "premature_convergence"
+    effective_depth: "N * T steps"
+    
+  dimensionality_hierarchy:
+    low_level_pr: 30.22
+    high_level_pr: 89.95
+    ratio: 2.98
+    biological_correspondence: "matches mouse cortex ratio"
+    
+  turing_completeness:
+    theoretical: true
+    practical: "approaches with sufficient depth"
+    
+dependencies:
+  pytorch: ">=1.9.0"
+  transformers: "for baseline comparisons"
+  numpy: "for data processing"
+  
+additional_notes:
+  - "Start with smaller models for experimentation"
+  - "Ensure challenging datasets (not easy Sudoku)"
+  - "Monitor forward residuals for convergence"
+  - "Use stablemax instead of softmax for small-sample experiments"
+  - "Implement ACT gradually after basic model works"
+  
+visualization:
+  intermediate_steps: true
+  pca_trajectories: true
+  participation_ratio: true
+  
+evaluation:
+  arc_agi:
+    attempts_per_test: 2
+    aggregation: "most_popular_predictions"
+  sudoku:
+    metric: "exact_match"
+  maze:
+    metric: "valid_and_optimal_path"
