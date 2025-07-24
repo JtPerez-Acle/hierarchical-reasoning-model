@@ -42,7 +42,7 @@ The model shows clear learning progression from random predictions (left) to mor
 curl -LsSf https://astral.sh/uv/install.sh | sh
 
 # Clone the repository
-git clone <your-repo-url>
+git clone https://github.com/JtPerez-Acle/hierarchical-reasoning-model
 cd hierarchical-reasoning-model
 
 # Install dependencies
